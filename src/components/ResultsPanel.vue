@@ -1,0 +1,95 @@
+<script lang="ts" setup>
+import { computed } from "vue";
+import type { Variation } from "../types/variation.ts";
+
+const props = defineProps<{
+  variations: Variation[];
+  selectedVariation: Variation | null;
+}>();
+
+const emit = defineEmits<{
+  ( e: "update:selectedVariation", val: Variation | null ): void
+  ( e: "apply" ): void
+}>();
+
+// Computed properties to organize the flat array into a grid.
+const uniqueStrengths = computed( () => [...new Set( props.variations.map( v => v.strength ) )].sort( ( a, b ) => a - b ) );
+const uniqueGuidances = computed( () => [...new Set( props.variations.map( v => v.guidance ) )].sort( ( a, b ) => a - b ) );
+
+const getVariation = ( s: number, g: number ): Variation | undefined => {
+  return props.variations.find( v => v.strength === s && v.guidance === g );
+};
+</script>
+
+<template>
+  <section class="p-6 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col">
+    <h3 class="text-xl font-bold text-slate-800 mb-6">Select Best Variation</h3>
+
+    <div v-if="selectedVariation" class="flex flex-col gap-4 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+      <img
+          :src="selectedVariation.image"
+          alt="Selected AI generated variation preview"
+          class="w-full rounded-lg border-2 border-emerald-500 shadow-sm object-cover"
+          loading="lazy"
+      />
+      <div class="text-sm text-slate-500 text-center font-medium">
+        Strength: <span class="text-slate-900">{{ selectedVariation.strength }}</span> |
+        Guidance: <span class="text-slate-900">{{ selectedVariation.guidance }}</span>
+      </div>
+      <button
+          class="bg-slate-800 text-white border-none py-3 px-6 rounded-lg cursor-pointer font-bold hover:bg-slate-700 transition-colors duration-200 shadow-md focus:ring-4 focus:ring-slate-200"
+          @click="emit('apply')"
+      >
+        Apply & Continue Editing
+      </button>
+    </div>
+
+    <!-- Matrix Table -->
+    <div class="overflow-x-auto pb-4">
+      <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2 ml-[80px]">
+        Guidance ➝
+      </div>
+
+      <table class="border-separate border-spacing-2 mx-auto">
+        <thead>
+        <tr>
+          <th class="text-xs text-slate-400 font-semibold uppercase tracking-wider text-right pr-2 align-bottom pb-2">
+            Strength ↓
+          </th>
+          <th v-for="g in uniqueGuidances" :key="g" class="text-sm font-bold text-slate-600 pb-2">
+            {{ g }}
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="s in uniqueStrengths" :key="s">
+          <td class="font-bold text-slate-600 text-sm text-right pr-2 align-middle">{{ s }}</td>
+          <td v-for="g in uniqueGuidances" :key="g" class="p-0">
+            <div
+                :aria-label="`Select variation with strength ${s} and guidance ${g}`"
+                :class="[
+                  selectedVariation?.strength === s && selectedVariation?.guidance === g
+                    ? 'border-emerald-500 scale-110 shadow-lg shadow-emerald-500/30 z-10'
+                    : 'border-transparent hover:scale-110 hover:shadow-md hover:z-10'
+                ]"
+                class="w-16 h-16 rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200 relative group bg-slate-100"
+                role="button"
+                @click="emit('update:selectedVariation', getVariation(s, g) ?? null)"
+            >
+              <img
+                  v-if="getVariation(s, g)"
+                  :src="getVariation(s, g)?.image"
+                  alt="Variation thumbnail"
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+              />
+              <span v-else
+                    class="block w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">-</span>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</template>
