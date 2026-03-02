@@ -12,6 +12,7 @@ const emit = defineEmits<{
 }>();
 
 const canvasRef = ref<HTMLCanvasElement | null>( null );
+const loadedImage = ref<HTMLImageElement | null>( null );
 const isDrawing = ref( false );
 
 watch( () => props.imageSrc, ( newSrc ) => {
@@ -24,7 +25,11 @@ onMounted( () => {
 
 const loadImageToCanvas = ( src: string ) => {
   const img = new Image();
+  img.crossOrigin = "anonymous";
+
   img.onload = async () => {
+    loadedImage.value = img;
+
     await nextTick();
 
     const canvas = canvasRef.value;
@@ -78,9 +83,9 @@ const canvasToBlob = ( canvas: HTMLCanvasElement ): Promise<Blob | null> => {
 };
 
 const processAndEmit = async () => {
-  if (!canvasRef.value) return;
+  if (!canvasRef.value || !loadedImage.value) return;
 
-  const canvas = canvasRef.value;
+  const visibleCanvas = canvasRef.value;
   const maskCanvas = document.createElement( "canvas" );
   maskCanvas.width = 512;
   maskCanvas.height = 512;
@@ -92,13 +97,13 @@ const processAndEmit = async () => {
   const originalCanvas = document.createElement( "canvas" );
   originalCanvas.width = 512;
   originalCanvas.height = 512;
-  originalCanvas.getContext( "2d" )!.drawImage( canvas, 0, 0, 512, 512 );
+  const oCtx = originalCanvas.getContext( "2d" )!;
+  oCtx.drawImage( loadedImage.value, 0, 0, 512, 512 );
 
-  const currentData = canvas.getContext( "2d" )!.getImageData( 0, 0, 512, 512 );
+  const currentData = visibleCanvas.getContext( "2d" )!.getImageData( 0, 0, 512, 512 );
   const maskData = mCtx.getImageData( 0, 0, 512, 512 );
 
   let hasMask = false;
-  // For loop optimized for lower-end devices processing pixel manipulation
   const len = currentData.data.length;
   for (let i = 0; i < len; i += 4) {
     if (currentData.data[i] === 255 && currentData.data[i + 1] === 255 && currentData.data[i + 2] === 255) {
