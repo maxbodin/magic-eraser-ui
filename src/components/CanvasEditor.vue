@@ -11,7 +11,7 @@ const emit = defineEmits<{
   ( e: "reset" ): void
 }>();
 
-const OPTIMIZED_MAX_DIMENSION = 1080;
+const OPTIMIZED_MAX_DIMENSION = 768;
 const MASK_COLOR = "rgb(255, 0, 0)";
 const BRUSH_SIZE_BASE = 30;
 

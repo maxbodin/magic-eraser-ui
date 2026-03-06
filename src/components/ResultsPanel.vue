@@ -33,18 +33,18 @@ const downloadImage = () => {
 </script>
 
 <template>
-  <section class="p-6 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col mx-auto">
+  <section class="p-6 w-full max-w-4xl flex flex-col mx-auto bg-black/1 backdrop-blur-sm rounded-xl shadow-sm">
     <h3 class="text-xl font-bold text-slate-800 mb-6">Select Best Variation</h3>
 
-    <div v-if="selectedVariation" class="flex flex-col gap-4 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+    <div v-if="selectedVariation" class="flex flex-col gap-4 p-4 rounded-xl">
       <div
           :style="{ aspectRatio: selectedVariation.aspectRatio ? `${selectedVariation.aspectRatio}` : 'auto' }"
-          class="w-full rounded-lg border-2 border-emerald-500 shadow-sm bg-white flex items-center justify-center overflow-hidden"
+          class="w-full rounded-lg border-2 border-emerald-500 shadow-sm  flex items-center justify-center overflow-hidden"
       >
         <img
             :src="selectedVariation.image"
             alt="Selected AI generated variation preview"
-            class="max-w-full max-h-full object-contain"
+            class="w-full h-full object-cover"
             loading="lazy"
         />
       </div>
