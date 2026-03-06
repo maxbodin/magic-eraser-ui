@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import CanvasEditor from "./components/CanvasEditor.vue";
 import ResultsPanel from "./components/ResultsPanel.vue";
 import HeroSection from "./components/HeroSection.vue";
@@ -12,12 +12,14 @@ const {
   imageSrc,
   loading,
   variations,
+  addVariation,
+  resetVariations,
+  isProcessing,
   selectedVariation,
   error,
   hasImage,
   hasVariations,
   setImage,
-  setVariations,
   applySelectedVariation,
   reset,
   setLoading,
@@ -109,7 +111,7 @@ const handleUpload = ( e: Event ) => {
 };
 
 /**
- * Processes object removal request
+ * Processes object removal request using client-side parallelization.
  */
 const removeObject = async ( { imageBlob, maskBlob, aspectRatio }: {
   imageBlob: Blob;
@@ -119,27 +121,19 @@ const removeObject = async ( { imageBlob, maskBlob, aspectRatio }: {
   setLoading( true );
   setAspectRatio( aspectRatio );
   setError( null );
+  resetVariations();
 
   try {
-    const response = await imageProcessingAPI.removeObject( {
-      imageBlob,
-      maskBlob,
-      aspectRatio,
-    } );
+    // Fire all requests concurrently.
+    await imageProcessingAPI.generateAllVariations(
+        { imageBlob, maskBlob, aspectRatio },
+        ( variation ) => {
+          // As soon as one variation is processed by cloudflare, it pushes to UI.
+          addVariation( variation );
 
-    const mappedVariations = response.variations.map( ( v ) => ( {
-      strength: v.strength,
-      guidance: v.guidance,
-      image: v.image,
-      aspectRatio,
-    } ) );
+        }
+    );
 
-    setVariations( mappedVariations );
-
-    await nextTick();
-    window.setTimeout( () => {
-      resultsPanelRef.value?.scrollIntoView( { behavior: "smooth", block: "start" } );
-    }, 100 );
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error occurred";
     setError( `Error removing object: ${ message }` );
@@ -454,9 +448,10 @@ function handleBgUp() {
             />
           </div>
           <ResultsPanel
-              v-if="hasVariations"
+              v-if="hasVariations || loading"
               ref="resultsPanelRef"
               v-model:selectedVariation="selectedVariation"
+              :is-processing="isProcessing"
               :variations="variations"
               class="disable-bg-draw w-full"
               @apply="applyResult"

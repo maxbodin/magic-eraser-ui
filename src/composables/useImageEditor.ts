@@ -40,13 +40,12 @@ export const useImageEditor = () => {
 	};
 
 	/**
-	 * Définit les variations de résultats
+	 * Progressively add variation and auto-select the first one arrived.
 	 */
-	const setVariations = ( vars: Variation[] ) => {
-		variations.value = vars;
-		if (vars.length > 0) {
-			const middleIndex = Math.floor( vars.length / 2 );
-			selectedVariation.value = vars[middleIndex] ?? null;
+	const addVariation = ( variation: Variation ) => {
+		variations.value.push( variation );
+		if (variations.value.length === 1 && !selectedVariation.value) {
+			selectedVariation.value = variation;
 		}
 	};
 
@@ -129,7 +128,7 @@ export const useImageEditor = () => {
 		// Methods
 		setImage,
 		resetVariations,
-		setVariations,
+		addVariation,
 		selectVariation,
 		applySelectedVariation,
 		reset,
@@ -140,4 +139,3 @@ export const useImageEditor = () => {
 		cleanup,
 	};
 };
-

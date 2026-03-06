@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import { computed } from "vue";
 import type { Variation } from "../types/variation.ts";
+import { GUIDANCES, STRENGTHS } from "../services/imageProcessingAPI";
 
 const props = defineProps<{
   variations: Variation[];
   selectedVariation: Variation | null;
+  isProcessing: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -12,9 +13,8 @@ const emit = defineEmits<{
   ( e: "apply" ): void
 }>();
 
-// Computed properties to organize the flat array into a grid.
-const uniqueStrengths = computed( () => [...new Set( props.variations.map( v => v.strength ) )].sort( ( a, b ) => a - b ) );
-const uniqueGuidances = computed( () => [...new Set( props.variations.map( v => v.guidance ) )].sort( ( a, b ) => a - b ) );
+const uniqueStrengths = STRENGTHS;
+const uniqueGuidances = GUIDANCES;
 
 const getVariation = ( s: number, g: number ): Variation | undefined => {
   return props.variations.find( v => v.strength === s && v.guidance === g );
@@ -33,8 +33,10 @@ const downloadImage = () => {
 </script>
 
 <template>
-  <section class="p-6 w-full max-w-4xl flex flex-col mx-auto bg-black/1 backdrop-blur-sm rounded-xl shadow-sm">
-    <h3 class="text-xl font-bold text-slate-800 mb-6">Select Best Variation</h3>
+  <section class="p-6 w-full max-w-4xl flex flex-col mx-auto bg-black/1 backdrop-blur-sm rounded-xl shadow-sm select-none">
+    <h3 class="text-xl font-bold text-slate-800 mb-6">
+      {{ isProcessing ? "Generating Variations..." : "Select Best Variation" }}
+    </h3>
 
     <div v-if="selectedVariation" class="flex flex-col gap-4 p-4 rounded-xl">
       <div
@@ -100,14 +102,15 @@ const downloadImage = () => {
             <div
                 :aria-label="`Select variation with strength ${s} and guidance ${g}`"
                 :class="[
-                  selectedVariation?.strength === s && selectedVariation?.guidance === g
-                    ? 'border-emerald-500 scale-110 shadow-lg shadow-emerald-500/30 z-10'
-                    : 'border-transparent hover:scale-110 hover:shadow-md hover:z-10'
-                ]"
+                    selectedVariation?.strength === s && selectedVariation?.guidance === g
+                      ? 'border-emerald-500 scale-110 shadow-lg shadow-emerald-500/30 z-10'
+                      : 'border-transparent hover:scale-110 hover:shadow-md hover:z-10',
+                    getVariation(s, g) ? 'cursor-pointer' : 'cursor-default opacity-60'
+                  ]"
                 :style="{ aspectRatio: getVariation(s, g)?.aspectRatio ? `${getVariation(s, g)?.aspectRatio}` : '1' }"
-                class="w-16 rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200 relative group bg-slate-100 flex items-center justify-center"
+                class="w-16 rounded-xl overflow-hidden border-2 transition-all duration-200 relative group bg-slate-100 flex items-center justify-center"
                 role="button"
-                @click="emit('update:selectedVariation', getVariation(s, g) ?? null)"
+                @click="getVariation(s, g) && emit('update:selectedVariation', getVariation(s, g) ?? null)"
             >
               <img
                   v-if="getVariation(s, g)"
@@ -116,9 +119,18 @@ const downloadImage = () => {
                   class="max-w-full max-h-full object-contain"
                   loading="lazy"
               />
-              <span v-else
-                    class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">-</span>
+
+              <span v-else class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
+                  <svg v-if="isProcessing" class="animate-spin h-5 w-5 text-emerald-500"
+                       fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            fill="currentColor"></path>
+                  </svg>
+                  <span v-else>-</span>
+                </span>
             </div>
+
           </td>
         </tr>
         </tbody>
