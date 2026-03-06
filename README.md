@@ -1,6 +1,6 @@
 # Magic Eraser AI - Image Editing Tool
 
-> Advanced AI-powered object removal tool for images.
+> Frontend of AI-powered object removal tool deployed on Cloudflare.
 
 ## Features
 
