@@ -11,7 +11,7 @@ const currentYear = new Date().getFullYear();
     <div class="relative z-10 max-w-350 mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid gap-8 mb-2 py-4">
         <div class="col-span-1">
-          <h3 class="text-2xl font-bold bg-linear-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">
+          <h3 class="text-2xl font-extrabold bg-linear-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">
             Magic Eraser AI
           </h3>
           <p class="text-sm">

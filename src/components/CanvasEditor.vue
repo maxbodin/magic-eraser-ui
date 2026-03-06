@@ -293,18 +293,7 @@ const processAndEmit = async () => {
 </script>
 
 <template>
-  <section class="p-6 rounded-2xl shadow-xl flex flex-col w-full max-w-2xl mx-auto">
-    <header class="flex justify-between items-center mb-4 w-full">
-      <h3 class="text-xl font-bold text-slate-800">Mask Object</h3>
-      <button
-          aria-label="Reset workspace"
-          class="text-sm text-slate-400 hover:text-rose-500 font-medium transition-colors"
-          @click="emit('reset')"
-      >
-        ✕ Reset
-      </button>
-    </header>
-
+  <section class="p-6 rounded-2xl shadow-xl flex flex-col w-full max-w-4xl mx-auto bg-black/1 backdrop-blur-sm">
     <!-- Tool Controls -->
     <div aria-label="Drawing Tools" class="flex justify-center items-center gap-4 mb-4" role="toolbar">
       <button
@@ -321,33 +310,47 @@ const processAndEmit = async () => {
       >
         Eraser
       </button>
+      <button
+          aria-label="Reset workspace"
+          class="text-md text-slate-400 hover:text-rose-500 font-medium transition-colors"
+          @click="emit('reset')"
+      >
+        ✕ Reset
+      </button>
     </div>
 
     <figure
         :style="{
-          aspectRatio: aspectRatio ? `${aspectRatio}` : 'auto',
+          aspectRatio: aspectRatio ? `${aspectRatio}` : '16/9',
           maxWidth: '100%',
+          minHeight: !imageSrc ? '360px' : undefined
         }"
-        class="relative mb-6 w-full mx-auto border border-slate-200 shadow-inner rounded-xl overflow-hidden shrink-0 bg-slate-50"
-        style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22><rect width=%2210%22 height=%2210%22 fill=%22%23e2e8f0%22/><rect x=%2210%22 y=%2210%22 width=%2210%22 height=%2210%22 fill=%22%23e2e8f0%22/></svg>')"
+        class="relative mb-6 w-full mx-auto border border-slate-200 shadow-inner rounded-xl overflow-hidden shrink-0"
     >
-      <canvas
-          ref="imageCanvasRef"
-          aria-hidden="true"
-          class="absolute top-0 left-0 w-full h-full rounded-xl"
-      ></canvas>
-      <canvas
-          ref="drawingCanvasRef"
-          aria-label="Interactive drawing area to mask objects"
-          class="absolute top-0 left-0 w-full h-full cursor-crosshair opacity-50 touch-none rounded-xl"
-          @mousedown="startDrawing"
-          @mouseleave="stopDrawing"
-          @mousemove="draw"
-          @mouseup="stopDrawing"
-          @touchstart.prevent="startDrawing"
-          @touchmove.prevent="draw"
-          @touchend.prevent="stopDrawing"
-      ></canvas>
+      <template v-if="!imageSrc">
+        <div class="absolute inset-0 bg-checker flex items-center justify-center">
+          <span class="text-slate-400 font-bold text-2xl z-10">No image loaded</span>
+        </div>
+      </template>
+      <template v-else>
+        <canvas
+            ref="imageCanvasRef"
+            aria-hidden="true"
+            class="absolute top-0 left-0 w-full h-full rounded-xl"
+        ></canvas>
+        <canvas
+            ref="drawingCanvasRef"
+            aria-label="Interactive drawing area to mask objects"
+            class="absolute top-0 left-0 w-full h-full cursor-crosshair opacity-50 touch-none rounded-xl"
+            @mousedown="startDrawing"
+            @mouseleave="stopDrawing"
+            @mousemove="draw"
+            @mouseup="stopDrawing"
+            @touchstart.prevent="startDrawing"
+            @touchmove.prevent="draw"
+            @touchend.prevent="stopDrawing"
+        ></canvas>
+      </template>
     </figure>
 
     <div class="mt-auto">
@@ -368,3 +371,15 @@ const processAndEmit = async () => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.bg-checker {
+  background-image: linear-gradient(45deg, #f3f4f6 25%, transparent 25%),
+  linear-gradient(-45deg, #f3f4f6 25%, transparent 25%),
+  linear-gradient(45deg, transparent 75%, #f3f4f6 75%),
+  linear-gradient(-45deg, transparent 75%, #f3f4f6 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  background-color: #ffffff;
+}
+</style>
