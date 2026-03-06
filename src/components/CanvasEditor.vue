@@ -203,7 +203,12 @@ const canvasToBlob = ( canvas: HTMLCanvasElement, mimeType = "image/jpeg", quali
  * Processes the canvases to generate image and mask blobs, then emits the result.
  */
 const processAndEmit = async () => {
-  if (!drawingCanvasRef.value || !loadedImage.value || !imageCanvasRef.value) return;
+  if (!props.imageSrc || !loadedImage.value) {
+    alert( "Please upload an image first." );
+    return;
+  }
+
+  if (!drawingCanvasRef.value || !imageCanvasRef.value) return;
 
   const drawingCanvas = drawingCanvasRef.value;
   const origWidth = drawingCanvas.width;
