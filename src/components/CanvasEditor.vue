@@ -316,7 +316,7 @@ const processAndEmit = async () => {
           class="text-md text-slate-400 hover:text-rose-500 font-medium transition-colors"
           @click="emit('reset')"
       >
-        ✕ Reset
+        ✕ Remove image
       </button>
     </div>
 
@@ -329,7 +329,7 @@ const processAndEmit = async () => {
         class="relative mb-6 w-full mx-auto border border-slate-200 shadow-inner rounded-xl overflow-hidden shrink-0"
     >
       <template v-if="!imageSrc">
-        <div class="absolute inset-0 bg-checker flex items-center justify-center">
+        <div class="absolute inset-0 bg-checker flex items-center justify-center opacity-50">
           <span class="text-slate-400 font-bold text-2xl z-10">No image loaded</span>
         </div>
       </template>

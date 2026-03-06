@@ -187,12 +187,23 @@ interface Bubble {
   alpha: number;
 }
 
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  r: number;
+  color: string;
+  alpha: number;
+}
+
 const bgCanvasRef = ref<HTMLCanvasElement | null>( null );
 const isDrawingBg = ref( false );
 const lastBgPoint = ref<{ x: number, y: number } | null>( null );
 
 const bgStrokes: BgStroke[] = [];
 const bubbles: Bubble[] = [];
+const particles: Particle[] = [];
 
 let bubbleId = 0;
 let bgRafId: number | null = null;
@@ -210,6 +221,23 @@ function spawnBubble() {
   const vx = ( Math.random() - 0.5 ) * 0.5;
   const vy = -0.5 - Math.random() * 1.2;
   bubbles.push( { id: bubbleId++, x, y, r, vx, vy, color: randomColor(), alpha: 0.7 + Math.random() * 0.3 } );
+}
+
+function spawnExplosion(x: number, y: number, color: string) {
+  const particleCount = 12 + Math.random() * 100;
+  for (let i = 0; i < particleCount; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 10; // Velocity burst.
+    particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      r: 3 + Math.random() * 5,
+      color,
+      alpha: 1.0
+    });
+  }
 }
 
 function animateBubbles() {
@@ -246,6 +274,34 @@ function animateBubbles() {
     ctx.restore();
   }
 
+  // Update and draw explosion particles.
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+
+    // Particle Physics.
+    p.vx *= 0.92; // Friction
+    p.vy += 0.15; // Gravity
+    p.x += p.vx;
+    p.y += p.vy;
+    p.alpha -= 0.02; // Fade out
+    p.r *= 0.95; // Shrink radius
+
+    if (p.alpha <= 0 || p.r <= 0.5) {
+      particles.splice(i, 1);
+      continue;
+    }
+
+    ctx.save();
+    ctx.globalAlpha = p.alpha;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 8;
+    ctx.fill();
+    ctx.restore();
+  }
+
   // Draw bubbles
   for (const b of bubbles) {
     ctx.save();
@@ -270,7 +326,7 @@ function updateBubbles() {
     if (bubbles[i].y + bubbles[i].r < 0) bubbles.splice( i, 1 );
   }
   // Spawn new bubbles if needed.
-  if (bubbles.length < 18 && Math.random() < 0.15) spawnBubble();
+  if (bubbles.length < 20 && Math.random() < 0.15) spawnBubble();
 }
 
 function bgLoop() {
@@ -306,7 +362,10 @@ function checkBubbleCollisions( pt: { x: number, y: number } ) {
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i];
     const dist = Math.hypot( pt.x - b.x, pt.y - b.y );
-    if (dist < b.r + 16) bubbles.splice( i, 1 );
+    if (dist < b.r + 16) {
+      spawnExplosion(b.x, b.y, b.color);
+      bubbles.splice( i, 1 );
+    }
   }
 }
 
