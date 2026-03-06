@@ -220,7 +220,8 @@ function spawnBubble() {
   const y = bgHeight + r + Math.random() * 100;
   const vx = ( Math.random() - 0.5 ) * 0.5;
   const vy = -0.5 - Math.random() * 1.2;
-  bubbles.push( { id: bubbleId++, x, y, r, vx, vy, color: randomColor(), alpha: 0.7 + Math.random() * 0.3 } );
+  const color = randomColor();
+  bubbles.push( { id: bubbleId++, x, y, r, vx, vy, color: color || "#a5b4fc", alpha: 0.7 + Math.random() * 0.3 } );
 }
 
 function spawnExplosion( x: number, y: number, color: string ) {
@@ -256,6 +257,7 @@ function animateBubbles() {
 
     for (let i = bgStrokes.length - 1; i >= 0; i--) {
       const s = bgStrokes[i];
+      if (!s) continue;
 
       ctx.globalAlpha = Math.max( 0, Math.min( 1, s.alpha ) );
       ctx.beginPath();
@@ -277,6 +279,7 @@ function animateBubbles() {
   // Update and draw explosion particles.
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
+    if (!p) continue;
 
     // Particle Physics.
     p.vx *= 0.92; // Friction
@@ -323,7 +326,8 @@ function updateBubbles() {
   }
   // Remove bubbles out of screen.
   for (let i = bubbles.length - 1; i >= 0; i--) {
-    if (bubbles[i].y + bubbles[i].r < 0) bubbles.splice( i, 1 );
+    const b = bubbles[i];
+    if (b && b.y + b.r < 0) bubbles.splice( i, 1 );
   }
   // Spawn new bubbles if needed.
   if (bubbles.length < 20 && Math.random() < 0.15) spawnBubble();
@@ -361,6 +365,7 @@ function getBgPos( e: MouseEvent | TouchEvent ) {
 function checkBubbleCollisions( pt: { x: number, y: number } ) {
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i];
+    if (!b) continue;
     const dist = Math.hypot( pt.x - b.x, pt.y - b.y );
     if (dist < b.r + 16) {
       spawnExplosion( b.x, b.y, b.color );
