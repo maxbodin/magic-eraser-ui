@@ -18,7 +18,7 @@ const handleUpload = ( e: Event ) => {
 </script>
 
 <template>
-  <section class="relative overflow-hidden">
+  <section class="relative overflow-hidden select-none">
     <div class="relative z-10 max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
       <div class="text-center mb-12 sm:mb-16">
         <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-violet-600 via-emerald-600 to-teal-500 mb-6 sm:mb-8 leading-tight tracking-tight">
@@ -74,7 +74,7 @@ const handleUpload = ( e: Event ) => {
         <!-- CTA Button -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <label
-              class="group relative inline-flex cursor-pointer overflow-hidden rounded-xl bg-linear-to-r from-violet-600 to-emerald-500 p-0.5 transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/50 active:scale-95 shadow-xl shadow-emerald-500/20 w-full sm:w-auto transition-all duration-300 hover:scale-110"
+              class="group relative inline-flex cursor-pointer overflow-hidden rounded-xl bg-linear-to-r from-violet-600 to-emerald-500 p-0.5 transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/50 active:scale-95 shadow-xl shadow-emerald-500/20 w-full sm:w-auto hover:scale-110"
               @mouseenter="isHovering = true"
               @mouseleave="isHovering = false"
           >

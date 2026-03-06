@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import CanvasEditor from "./components/CanvasEditor.vue";
 import ResultsPanel from "./components/ResultsPanel.vue";
 import HeroSection from "./components/HeroSection.vue";
@@ -34,14 +34,17 @@ const mainRef = ref<HTMLElement | null>( null );
 let mouseX = 0;
 let mouseY = 0;
 let rafId: number | null = null;
+let resizeObserver: ResizeObserver | null = null;
 
 onBeforeUnmount( () => {
   cleanup();
-  if (rafId !== null) {
-    cancelAnimationFrame( rafId );
-  }
+  if (rafId !== null) cancelAnimationFrame( rafId );
+  if (bgRafId !== null) cancelAnimationFrame( bgRafId );
+  if (resizeObserver) resizeObserver.disconnect();
+
   document.removeEventListener( "mousemove", handleMouseMove );
   document.removeEventListener( "mouseleave", handleMouseLeave );
+  window.removeEventListener( "resize", resizeBgCanvas );
 } );
 
 onMounted( () => {
@@ -52,6 +55,15 @@ onMounted( () => {
     document.addEventListener( "mousemove", handleMouseMove, { passive: true } );
     document.addEventListener( "mouseleave", handleMouseLeave, { passive: true } );
   }
+
+  resizeObserver = new ResizeObserver( () => resizeBgCanvas() );
+  if (mainRef.value) {
+    resizeObserver.observe( mainRef.value );
+  }
+
+  window.addEventListener( "resize", resizeBgCanvas );
+  for (let i = 0; i < 18; i++) spawnBubble();
+  bgLoop();
 } );
 
 /**
@@ -141,8 +153,6 @@ const removeObject = async ( { imageBlob, maskBlob, aspectRatio }: {
  */
 const applyResult = () => {
   applySelectedVariation();
-
-  // Scroll back to canvas.
   window.setTimeout( () => {
     canvasEditorRef.value?.scrollIntoView( { behavior: "smooth", block: "start" } );
   }, 100 );
@@ -158,19 +168,32 @@ const scrollToCanvas = () => {
 };
 
 // --- BUBBLES BACKGROUND ---
+interface BgStroke {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  alpha: number;
+}
+
+interface Bubble {
+  id: number;
+  x: number;
+  y: number;
+  r: number;
+  vx: number;
+  vy: number;
+  color: string;
+  alpha: number;
+}
+
 const bgCanvasRef = ref<HTMLCanvasElement | null>( null );
 const isDrawingBg = ref( false );
 const lastBgPoint = ref<{ x: number, y: number } | null>( null );
-const bubbles = reactive<{
-  id: number,
-  x: number,
-  y: number,
-  r: number,
-  vx: number,
-  vy: number,
-  color: string,
-  alpha: number
-}[]>( [] );
+
+const bgStrokes: BgStroke[] = [];
+const bubbles: Bubble[] = [];
+
 let bubbleId = 0;
 let bgRafId: number | null = null;
 let bgWidth = 0, bgHeight = 0;
@@ -194,6 +217,35 @@ function animateBubbles() {
   const ctx = bgCanvasRef.value.getContext( "2d" );
   if (!ctx) return;
   ctx.clearRect( 0, 0, bgWidth, bgHeight );
+
+  // Draw user brush trails.
+  if (bgStrokes.length > 0) {
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 30;
+    ctx.strokeStyle = "#f87171";
+
+    for (let i = bgStrokes.length - 1; i >= 0; i--) {
+      const s = bgStrokes[i];
+
+      ctx.globalAlpha = Math.max( 0, Math.min( 1, s.alpha ) );
+      ctx.beginPath();
+      ctx.moveTo( s.x1, s.y1 );
+      ctx.lineTo( s.x2, s.y2 );
+      ctx.stroke();
+
+      // Decrease alpha slowly over time.
+      s.alpha -= 0.015;
+
+      // Clean up dead brush strokes.
+      if (s.alpha <= 0) {
+        bgStrokes.splice( i, 1 );
+      }
+    }
+    ctx.restore();
+  }
+
   // Draw bubbles
   for (const b of bubbles) {
     ctx.save();
@@ -206,18 +258,6 @@ function animateBubbles() {
     ctx.fill();
     ctx.restore();
   }
-  // Draw user brush
-  if (isDrawingBg.value && lastBgPoint.value) {
-    ctx.save();
-    ctx.globalAlpha = 0.7;
-    ctx.beginPath();
-    ctx.arc( lastBgPoint.value.x, lastBgPoint.value.y, 18, 0, 2 * Math.PI );
-    ctx.fillStyle = "#f87171";
-    ctx.shadowColor = "#f87171";
-    ctx.shadowBlur = 8;
-    ctx.fill();
-    ctx.restore();
-  }
 }
 
 function updateBubbles() {
@@ -225,11 +265,11 @@ function updateBubbles() {
     b.x += b.vx;
     b.y += b.vy;
   }
-  // Remove bubbles out of screen
+  // Remove bubbles out of screen.
   for (let i = bubbles.length - 1; i >= 0; i--) {
     if (bubbles[i].y + bubbles[i].r < 0) bubbles.splice( i, 1 );
   }
-  // Spawn new bubbles if needed
+  // Spawn new bubbles if needed.
   if (bubbles.length < 18 && Math.random() < 0.15) spawnBubble();
 }
 
@@ -241,23 +281,11 @@ function bgLoop() {
 
 function resizeBgCanvas() {
   if (!bgCanvasRef.value || !mainRef.value) return;
-  const rect = mainRef.value.getBoundingClientRect();
   bgWidth = mainRef.value.scrollWidth;
   bgHeight = mainRef.value.scrollHeight;
   bgCanvasRef.value.width = bgWidth;
   bgCanvasRef.value.height = bgHeight;
 }
-
-onMounted( () => {
-  resizeBgCanvas();
-  window.addEventListener( "resize", resizeBgCanvas );
-  for (let i = 0; i < 18; i++) spawnBubble();
-  bgLoop();
-} );
-onBeforeUnmount( () => {
-  if (bgRafId) cancelAnimationFrame( bgRafId );
-  window.removeEventListener( "resize", resizeBgCanvas );
-} );
 
 // --- DRAWING ON BG ---
 function getBgPos( e: MouseEvent | TouchEvent ) {
@@ -274,55 +302,67 @@ function getBgPos( e: MouseEvent | TouchEvent ) {
   return { x: x - rect.left, y: y - rect.top };
 }
 
+function checkBubbleCollisions( pt: { x: number, y: number } ) {
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    const b = bubbles[i];
+    const dist = Math.hypot( pt.x - b.x, pt.y - b.y );
+    if (dist < b.r + 16) bubbles.splice( i, 1 );
+  }
+}
+
 function handleBgDown( e: MouseEvent | TouchEvent ) {
-  if (isOverEditor.value) return;
+  // Prevent background drawing if clicking interactive elements or protected areas.
+  const target = e.target as HTMLElement | null;
+  if (target?.closest( "button, a, input, textarea, select, .disable-bg-draw" )) return;
+
   isDrawingBg.value = true;
-  lastBgPoint.value = getBgPos( e );
-  handleBgDraw( e );
+  const pt = getBgPos( e );
+  lastBgPoint.value = pt;
+
+  // Render an initial dot to support single-click stamps.
+  bgStrokes.push( { x1: pt.x, y1: pt.y, x2: pt.x + 0.1, y2: pt.y, alpha: 1.0 } );
+  checkBubbleCollisions( pt );
+}
+
+function handleBgDraw( e: MouseEvent | TouchEvent ) {
+  if (!isDrawingBg.value) return;
+  const pt = getBgPos( e );
+
+  if (lastBgPoint.value) {
+    bgStrokes.push( {
+      x1: lastBgPoint.value.x,
+      y1: lastBgPoint.value.y,
+      x2: pt.x,
+      y2: pt.y,
+      alpha: 1.0
+    } );
+  }
+
+  checkBubbleCollisions( pt );
+  lastBgPoint.value = pt;
 }
 
 function handleBgUp() {
   isDrawingBg.value = false;
   lastBgPoint.value = null;
 }
-
-function handleBgDraw( e: MouseEvent | TouchEvent ) {
-  if (!isDrawingBg.value) return;
-  const pt = getBgPos( e );
-  // Collision: remove bubbles intersected by brush
-  for (let i = bubbles.length - 1; i >= 0; i--) {
-    const b = bubbles[i];
-    const dist = Math.hypot( pt.x - b.x, pt.y - b.y );
-    if (dist < b.r + 16) {
-      bubbles.splice( i, 1 );
-    }
-  }
-  lastBgPoint.value = pt;
-}
-
-const isOverEditor = ref( false );
-
-function setEditorHover( val: boolean ) {
-  isOverEditor.value = val;
-}
 </script>
 
 <template>
   <main ref="mainRef"
-        class="min-h-screen bg-linear-to-br from-white via-slate-50 to-white text-slate-900 font-sans selection:bg-emerald-200 relative">
+        class="min-h-screen bg-linear-to-br from-white via-slate-50 to-white text-slate-900 font-sans selection:bg-emerald-200 relative"
+        @mousedown="handleBgDown"
+        @mouseleave="handleBgUp"
+        @mousemove="handleBgDraw"
+        @mouseup="handleBgUp"
+        @touchend="handleBgUp"
+        @touchmove="handleBgDraw"
+        @touchstart="handleBgDown">
+
     <canvas ref="bgCanvasRef"
-            class="absolute left-0 top-0 w-full h-full pointer-events-auto z-0"
-            style="touch-action:none;"
-            @mousedown="handleBgDown"
-            @mouseleave="handleBgUp"
-            @mousemove="handleBgDraw"
-            @mouseup="handleBgUp"
-            @touchstart.prevent="handleBgDown"
-            @touchmove.prevent="handleBgDraw"
-            @touchend.prevent="handleBgUp"
+            class="absolute left-0 top-0 w-full h-full pointer-events-none z-0"
     ></canvas>
 
-    <!-- Mouse tracking cursor effect -->
     <div id="cursor-follow" class="cursor-follow"/>
 
     <ErrorAlert
@@ -339,7 +379,7 @@ function setEditorHover( val: boolean ) {
     <section class="relative py-4 sm:py-6 lg:py-8 overflow-hidden z-10">
       <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col justify-center gap-6 sm:gap-8 items-start w-full">
-          <div @mouseenter="setEditorHover(true)" @mouseleave="setEditorHover(false)">
+          <div class="disable-bg-draw w-full">
             <CanvasEditor
                 ref="canvasEditorRef"
                 :imageSrc="imageSrc || ''"
@@ -353,6 +393,7 @@ function setEditorHover( val: boolean ) {
               ref="resultsPanelRef"
               v-model:selectedVariation="selectedVariation"
               :variations="variations"
+              class="disable-bg-draw w-full"
               @apply="applyResult"
           />
         </div>
