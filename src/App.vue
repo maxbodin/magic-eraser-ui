@@ -62,6 +62,7 @@ onMounted( () => {
   }
 
   window.addEventListener( "resize", resizeBgCanvas );
+  resizeBgCanvas();
   for (let i = 0; i < 18; i++) spawnBubble();
   bgLoop();
 } );
