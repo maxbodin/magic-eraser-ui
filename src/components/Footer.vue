@@ -21,10 +21,10 @@ const currentYear = new Date().getFullYear();
       </div>
       <div class="border-t border-slate-800 my-4"/>
       <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <p class="text-sm">
+        <p class="text-md">
           &copy; {{ currentYear }} Magic Eraser AI. All rights reserved.
         </p>
-        <p class="text-sm">
+        <p class="text-md">
           Made with <span class="text-emerald-400">❤</span> by <a
             class="text-emerald-400 hover:text-emerald-300 transition-colors font-semibold"
             href="https://maximebodin.com">@MaxBodin</a>

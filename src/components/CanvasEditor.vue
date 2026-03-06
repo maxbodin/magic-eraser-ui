@@ -357,7 +357,7 @@ const processAndEmit = async () => {
     <div class="mt-auto">
       <button
           :disabled="loading"
-          class="w-full bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white border-none py-4 px-6 text-lg rounded-xl cursor-pointer font-bold flex justify-center items-center gap-3 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/30"
+          class="w-full bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white border-none py-4 px-6 text-xl rounded-xl cursor-pointer font-bold flex justify-center items-center gap-3 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/30"
           @click="processAndEmit"
       >
         <svg v-if="loading" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"
