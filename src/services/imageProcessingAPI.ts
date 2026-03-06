@@ -21,7 +21,7 @@ class ImageProcessingAPI {
 	private readonly workerUrl: string;
 	private timeout: number = import.meta.env.VITE_REQUEST_TIMEOUT ? parseInt( import.meta.env.VITE_REQUEST_TIMEOUT as string, 10 ) : 900000;
 
-	constructor( workerUrl: string = import.meta.env.VITE_API_WORKER_URL || "http://localhost:8787/api/erase-object-in-image" ) {
+	constructor( workerUrl: string = import.meta.env.VITE_API_WORKER_URL ) {
 		this.workerUrl = workerUrl;
 	}
 
