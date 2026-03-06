@@ -19,34 +19,66 @@ const uniqueGuidances = computed( () => [...new Set( props.variations.map( v => 
 const getVariation = ( s: number, g: number ): Variation | undefined => {
   return props.variations.find( v => v.strength === s && v.guidance === g );
 };
+
+const downloadImage = () => {
+  if (!props.selectedVariation?.image) return;
+
+  const link = document.createElement( "a" );
+  link.href = props.selectedVariation.image;
+  link.download = `magic-eraser-result-${ Date.now() }.png`;
+  document.body.appendChild( link );
+  link.click();
+  document.body.removeChild( link );
+};
 </script>
 
 <template>
-  <section class="p-6 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col">
+  <section class="p-6 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col mx-auto">
     <h3 class="text-xl font-bold text-slate-800 mb-6">Select Best Variation</h3>
 
     <div v-if="selectedVariation" class="flex flex-col gap-4 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
-      <img
-          :src="selectedVariation.image"
-          alt="Selected AI generated variation preview"
-          class="w-full rounded-lg border-2 border-emerald-500 shadow-sm object-cover"
-          loading="lazy"
-      />
+      <div
+          :style="{ aspectRatio: selectedVariation.aspectRatio ? `${selectedVariation.aspectRatio}` : 'auto' }"
+          class="w-full rounded-lg border-2 border-emerald-500 shadow-sm bg-white flex items-center justify-center overflow-hidden"
+      >
+        <img
+            :src="selectedVariation.image"
+            alt="Selected AI generated variation preview"
+            class="max-w-full max-h-full object-contain"
+            loading="lazy"
+        />
+      </div>
       <div class="text-sm text-slate-500 text-center font-medium">
         Strength: <span class="text-slate-900">{{ selectedVariation.strength }}</span> |
         Guidance: <span class="text-slate-900">{{ selectedVariation.guidance }}</span>
       </div>
-      <button
-          class="bg-slate-800 text-white border-none py-3 px-6 rounded-lg cursor-pointer font-bold hover:bg-slate-700 transition-colors duration-200 shadow-md focus:ring-4 focus:ring-slate-200"
-          @click="emit('apply')"
-      >
-        Apply & Continue Editing
-      </button>
+      <div class="flex gap-3">
+        <button
+            class="flex-1 bg-slate-800 text-white border-none py-3 px-6 rounded-lg cursor-pointer font-bold hover:bg-slate-700 transition-colors duration-200 shadow-md focus:ring-4 focus:ring-slate-200"
+            @click="emit('apply')"
+        >
+          Apply & Continue Editing
+        </button>
+        <button
+            aria-label="Download selected variation"
+            class="bg-emerald-500 text-white border-none py-3 px-6 rounded-lg cursor-pointer font-bold hover:bg-emerald-600 transition-colors duration-200 shadow-md focus:ring-4 focus:ring-emerald-200 flex items-center gap-2"
+            @click="downloadImage"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+               xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+          </svg>
+          Download
+        </button>
+      </div>
     </div>
 
     <!-- Matrix Table -->
     <div class="overflow-x-auto pb-4">
-      <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2 ml-[80px]">
+      <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2 ml-20">
         Guidance ➝
       </div>
 
@@ -72,7 +104,8 @@ const getVariation = ( s: number, g: number ): Variation | undefined => {
                     ? 'border-emerald-500 scale-110 shadow-lg shadow-emerald-500/30 z-10'
                     : 'border-transparent hover:scale-110 hover:shadow-md hover:z-10'
                 ]"
-                class="w-16 h-16 rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200 relative group bg-slate-100"
+                :style="{ aspectRatio: getVariation(s, g)?.aspectRatio ? `${getVariation(s, g)?.aspectRatio}` : '1' }"
+                class="w-16 rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200 relative group bg-slate-100 flex items-center justify-center"
                 role="button"
                 @click="emit('update:selectedVariation', getVariation(s, g) ?? null)"
             >
@@ -80,11 +113,11 @@ const getVariation = ( s: number, g: number ): Variation | undefined => {
                   v-if="getVariation(s, g)"
                   :src="getVariation(s, g)?.image"
                   alt="Variation thumbnail"
-                  class="w-full h-full object-cover"
+                  class="max-w-full max-h-full object-contain"
                   loading="lazy"
               />
               <span v-else
-                    class="block w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">-</span>
+                    class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">-</span>
             </div>
           </td>
         </tr>
