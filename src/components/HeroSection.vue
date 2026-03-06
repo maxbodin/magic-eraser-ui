@@ -30,7 +30,8 @@ const handleUpload = ( e: Event ) => {
           professional results in seconds.
         </p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16 bg-black/1 backdrop-blur-sm rounded-xl shadow-sm p-4">
+        <div
+            class="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16 bg-black/1 backdrop-blur-sm rounded-xl shadow-sm p-4">
           <div class="flex flex-col items-center group cursor-pointer transition-all duration-300 hover:scale-105">
             <div
                 class="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center mb-3 sm:mb-4 ">
@@ -52,7 +53,8 @@ const handleUpload = ( e: Event ) => {
               </svg>
             </div>
             <h3 class="text-sm sm:text-base font-semibold text-slate-900 mb-1 sm:mb-2">Fine Control</h3>
-            <p class="text-xs sm:text-sm text-slate-600">Choose strength and guidance from multiple variations for perfect results</p>
+            <p class="text-xs sm:text-sm text-slate-600">Choose strength and guidance from multiple variations for
+              perfect results</p>
           </div>
 
           <div class="flex flex-col items-center group cursor-pointer transition-all duration-300 hover:scale-105">
