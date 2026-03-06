@@ -1,34 +1,207 @@
 @import "tailwindcss";
 
 :root {
-    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    line-height: 1.6;
     font-weight: 400;
 
-    color: rgba(255, 255, 255, 0.87);
+    /* Color tokens */
+    --color-primary-600: #7c3aed;
+    --color-emerald-500: #10b981;
+    --color-teal-500: #14b8a6;
+    --color-primary-50: #f5f3ff;
 
+    /* Typography */
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
     margin: 0;
-    display: flex;
-    place-items: center;
+    padding: 0;
     min-width: 320px;
     min-height: 100vh;
-}
-
-h1 {
-    font-size: 3.2em;
-    line-height: 1.1;
+    background-color: #ffffff;
+    color: #111827;
+    position: relative;
 }
 
 #app {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 2rem;
-    text-align: center;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.cursor-follow {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0.1) 70%, rgba(16, 185, 129, 0) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), inset 0 0 10px rgba(16, 185, 129, 0.2);
+    will-change: transform;
+    transform: translate(-50%, -50%) scale(1);
+    display: none;
+    transition: transform 0.1s ease-out;
+}
+
+body:hover .cursor-follow {
+    display: block;
+}
+
+button:hover ~ .cursor-follow,
+a:hover ~ .cursor-follow,
+[role="button"]:hover ~ .cursor-follow {
+    transform: translate(-50%, -50%) scale(1.8);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+p {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    button:hover,
+    a:hover,
+    [role="button"]:hover {
+        transform: translateY(-2px);
+    }
+
+    button:active,
+    a:active,
+    [role="button"]:active {
+        transform: translateY(0);
+    }
+}
+
+/* Performance: reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .cursor-follow {
+        display: none !important;
+    }
+}
+
+/* Performance: optimize for touch devices */
+@media (hover: none) and (pointer: coarse) {
+    button,
+    a,
+    [role="button"] {
+        padding: 0.75rem;
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .cursor-follow {
+        display: none !important;
+    }
+}
+
+/* Canvas and SVG optimizations */
+canvas {
+    display: block;
+    image-rendering: crisp-edges;
+    touch-action: none;
+}
+
+svg {
+    display: block;
+    overflow: visible;
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+    outline: 2px solid var(--color-primary-600);
+    outline-offset: 2px;
+    border-radius: 0.375rem;
+}
+
+/* Loading state animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+    50% {
+        opacity: 0.8;
+        box-shadow: 0 0 40px rgba(16, 185, 129, 0.5);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+.animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Smooth transitions */
+@media (prefers-reduced-motion: no-preference) {
+    * {
+        @apply transition-colors;
+    }
+}
+
+/* Print styles */
+@media print {
+    body {
+        background: white;
+        cursor: auto;
+    }
+
+    .cursor-follow,
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* Optimize for low-bandwidth - reduce animations */
+@media (prefers-reduced-data: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
