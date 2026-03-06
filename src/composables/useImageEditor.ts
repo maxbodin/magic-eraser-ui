@@ -20,10 +20,10 @@ export const useImageEditor = () => {
 	const isProcessing = computed( () => loading.value );
 
 	/**
-	 * Définit une nouvelle image source
+	 * Sets a new image source, revoking the previous object URL if applicable.
 	 */
 	const setImage = ( src: string | null ) => {
-		if (imageSrc.value) {
+		if (imageSrc.value?.startsWith( "blob:" )) {
 			URL.revokeObjectURL( imageSrc.value );
 		}
 		imageSrc.value = src;
@@ -44,16 +44,9 @@ export const useImageEditor = () => {
 	 */
 	const addVariation = ( variation: Variation ) => {
 		variations.value.push( variation );
-		if (variations.value.length === 1 && !selectedVariation.value) {
+		if (variations.value.length === 1) {
 			selectedVariation.value = variation;
 		}
-	};
-
-	/**
-	 * Définit la variation sélectionnée
-	 */
-	const selectVariation = ( variation: Variation | null ) => {
-		selectedVariation.value = variation;
 	};
 
 	/**
@@ -78,21 +71,16 @@ export const useImageEditor = () => {
 	/**
 	 * Définit l'état de chargement
 	 */
-	const setLoading = ( isLoading: boolean ) => {
-		loading.value = isLoading;
+	const setLoading = ( val: boolean ) => {
+		loading.value = val;
 	};
 
 	/**
 	 * Définit un message d'erreur
 	 */
-	const setError = ( message: string | null ) => {
-		error.value = message;
+	const setError = ( msg: string | null ) => {
+		error.value = msg;
 	};
-
-	/**
-	 * Récupère le ratio d'aspect courant
-	 */
-	const getAspectRatio = (): number | null => currentAspectRatio.value;
 
 	/**
 	 * Définit le ratio d'aspect courant
@@ -105,7 +93,7 @@ export const useImageEditor = () => {
 	 * Cleanup function
 	 */
 	const cleanup = () => {
-		if (imageSrc.value) {
+		if (imageSrc.value?.startsWith( "blob:" )) {
 			URL.revokeObjectURL( imageSrc.value );
 		}
 	};
@@ -129,12 +117,10 @@ export const useImageEditor = () => {
 		setImage,
 		resetVariations,
 		addVariation,
-		selectVariation,
 		applySelectedVariation,
 		reset,
 		setLoading,
 		setError,
-		getAspectRatio,
 		setAspectRatio,
 		cleanup,
 	};

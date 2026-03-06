@@ -129,10 +129,8 @@ const removeObject = async ( { imageBlob, maskBlob, aspectRatio }: {
         ( variation ) => {
           // As soon as one variation is processed by cloudflare, it pushes to UI.
           addVariation( variation );
-
         }
     );
-
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error occurred";
     setError( `Error removing object: ${ message }` );
