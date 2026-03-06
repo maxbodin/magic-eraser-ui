@@ -294,7 +294,7 @@ const processAndEmit = async () => {
 
 <template>
   <section
-      class="p-6 rounded-2xl shadow-xl flex flex-col w-full max-w-4xl mx-auto bg-black/1 backdrop-blur-sm select-none">
+      class="p-2 rounded-2xl shadow-xl flex flex-col w-full max-w-4xl mx-auto bg-black/1 backdrop-blur-sm select-none">
     <!-- Tool Controls -->
     <div aria-label="Drawing Tools" class="flex justify-center items-center gap-4 mb-4" role="toolbar">
       <button

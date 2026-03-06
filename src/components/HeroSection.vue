@@ -19,8 +19,8 @@ const handleUpload = ( e: Event ) => {
 
 <template>
   <section class="relative overflow-hidden select-none">
-    <div class="relative z-10 max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
-      <div class="text-center mb-12 sm:mb-16">
+    <div class="relative z-10 max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-4 pt-20">
+      <div class="text-center">
         <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-violet-600 via-emerald-600 to-teal-500 mb-6 sm:mb-8 leading-tight tracking-tight">
           Magic Eraser AI
         </h1>
