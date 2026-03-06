@@ -223,20 +223,20 @@ function spawnBubble() {
   bubbles.push( { id: bubbleId++, x, y, r, vx, vy, color: randomColor(), alpha: 0.7 + Math.random() * 0.3 } );
 }
 
-function spawnExplosion(x: number, y: number, color: string) {
+function spawnExplosion( x: number, y: number, color: string ) {
   const particleCount = 12 + Math.random() * 100;
   for (let i = 0; i < particleCount; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 2 + Math.random() * 10; // Velocity burst.
-    particles.push({
+    particles.push( {
       x,
       y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
+      vx: Math.cos( angle ) * speed,
+      vy: Math.sin( angle ) * speed,
       r: 3 + Math.random() * 5,
       color,
       alpha: 1.0
-    });
+    } );
   }
 }
 
@@ -287,14 +287,14 @@ function animateBubbles() {
     p.r *= 0.95; // Shrink radius
 
     if (p.alpha <= 0 || p.r <= 0.5) {
-      particles.splice(i, 1);
+      particles.splice( i, 1 );
       continue;
     }
 
     ctx.save();
     ctx.globalAlpha = p.alpha;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+    ctx.arc( p.x, p.y, p.r, 0, 2 * Math.PI );
     ctx.fillStyle = p.color;
     ctx.shadowColor = p.color;
     ctx.shadowBlur = 8;
@@ -363,7 +363,7 @@ function checkBubbleCollisions( pt: { x: number, y: number } ) {
     const b = bubbles[i];
     const dist = Math.hypot( pt.x - b.x, pt.y - b.y );
     if (dist < b.r + 16) {
-      spawnExplosion(b.x, b.y, b.color);
+      spawnExplosion( b.x, b.y, b.color );
       bubbles.splice( i, 1 );
     }
   }
