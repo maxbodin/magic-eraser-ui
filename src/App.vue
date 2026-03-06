@@ -29,7 +29,6 @@ const {
 } = useImageEditor();
 
 const canvasEditorRef = ref<HTMLElement | null>( null );
-const resultsPanelRef = ref<HTMLElement | null>( null );
 const cursorFollowRef = ref<HTMLElement | null>( null );
 const mainRef = ref<HTMLElement | null>( null );
 
