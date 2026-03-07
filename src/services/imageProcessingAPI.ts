@@ -10,7 +10,8 @@ export interface RemoveObjectPayload {
 export const STRENGTHS = [0.8, 0.9, 1.0];
 export const GUIDANCES = [8, 9, 10, 11, 13];
 
-const POLL_INTERVAL_MS = 10000;
+const INITIAL_WAIT_MS = 30_000;
+const POLL_INTERVAL_MS = 5_000;
 const POLL_TIMEOUT_MS = 600_000;
 
 class ImageProcessingAPI {
@@ -28,47 +29,55 @@ class ImageProcessingAPI {
 		payload: RemoveObjectPayload,
 		onProgress: ( variation: Variation ) => void
 	): Promise<void> {
-		let successCount = 0;
+		const combinations = STRENGTHS.flatMap( ( strength ) =>
+			GUIDANCES.map( ( guidance ) => ( { strength, guidance } ) )
+		);
 
-		const tasks = STRENGTHS.flatMap( ( strength ) =>
-			GUIDANCES.map( ( guidance ) =>
-				this.fetchSingleVariation( payload, strength, guidance )
-					.then( ( variation ) => {
-						successCount++;
-						onProgress( variation );
-					} )
+		// Phase 1 — submit all jobs concurrently, no polling yet.
+		const submissions = await Promise.all(
+			combinations.map( ( { strength, guidance } ) =>
+				this.submitJob( payload, strength, guidance )
+					.then( ( jobId ) => ( { jobId, strength, guidance } ) )
 					.catch( ( err: Error ) => {
-						// Gracefully handle individual variation failures so the grid still loads others.
-						console.warn( `Failed S:${ strength } G:${ guidance } —`, err.message );
+						console.warn( `Submit failed S:${ strength } G:${ guidance } —`, err.message );
+						return null;
 					} )
 			)
 		);
 
-		// Wait for all requests to finish (whether resolved or rejected).
-		await Promise.all( tasks );
+		const submitted = submissions.filter( ( s ): s is NonNullable<typeof s> => s !== null );
+
+		if (submitted.length === 0) {
+			throw new Error( "All job submissions failed. Please check your connection." );
+		}
+
+		// Phase 2 — wait for workers to process.
+		await sleep( INITIAL_WAIT_MS );
+
+		// Phase 3 — poll all jobs concurrently, resolving progressively via onProgress.
+		let successCount = 0;
+
+		await Promise.all(
+			submitted.map( ( { jobId, strength, guidance } ) =>
+				this.pollUntilDone( jobId )
+					.then( ( result ) => {
+						successCount++;
+						onProgress( {
+							strength: result.strength,
+							guidance: result.guidance,
+							image: result.image,
+							aspectRatio: payload.aspectRatio,
+						} );
+					} )
+					.catch( ( err: Error ) => {
+						console.warn( `Poll failed S:${ strength } G:${ guidance } —`, err.message );
+					} )
+			)
+		);
 
 		if (successCount === 0) {
-			throw new Error( "All network requests failed. Please check your connection." );
+			throw new Error( "All jobs failed to complete. Please try again." );
 		}
-	}
-
-	/**
-	 * Submits a single job and polls until done.
-	 */
-	private async fetchSingleVariation(
-		payload: RemoveObjectPayload,
-		strength: number,
-		guidance: number
-	): Promise<Variation> {
-		const jobId = await this.submitJob( payload, strength, guidance );
-		const result = await this.pollUntilDone( jobId );
-
-		return {
-			strength: result.strength,
-			guidance: result.guidance,
-			image: result.image,
-			aspectRatio: payload.aspectRatio,
-		};
 	}
 
 	/**
@@ -90,9 +99,7 @@ class ImageProcessingAPI {
 			body: formData,
 		} );
 
-		if (!response.ok) {
-			throw new Error( `Submit failed: HTTP ${ response.status }` );
-		}
+		if (!response.ok) throw new Error( `Submit failed: HTTP ${ response.status }` );
 
 		const { jobId } = await response.json() as SubmitJobResponse;
 		return jobId;
@@ -105,19 +112,17 @@ class ImageProcessingAPI {
 		const deadline = Date.now() + POLL_TIMEOUT_MS;
 
 		while (Date.now() < deadline) {
-			await sleep( POLL_INTERVAL_MS );
-
 			const response = await fetch( `${ this.baseUrl }/api/job/${ jobId }` );
 
-			if (!response.ok) {
-				throw new Error( `Poll failed: HTTP ${ response.status }` );
-			}
+			if (!response.ok) throw new Error( `Poll failed: HTTP ${ response.status }` );
 
 			const data = await response.json() as JobStatusResponse;
 
 			if (data.status === "done") return data;
 			if (data.status === "error") throw new Error( data.error || "Job failed on server" );
 			// status === "pending" → keep polling
+
+			await sleep( POLL_INTERVAL_MS );
 		}
 
 		throw new Error( `Job timed out after ${ POLL_TIMEOUT_MS / 1000 }s` );
