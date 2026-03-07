@@ -10,9 +10,9 @@ export interface RemoveObjectPayload {
 export const STRENGTHS = [0.8, 0.9, 1.0];
 export const GUIDANCES = [8, 9, 10, 11, 13];
 
-const SUBMIT_DELAY_MS = 500;
-const INITIAL_WAIT_MS = 20_000;
-const POLL_INTERVAL_MS = 8_000;
+const SUBMIT_DELAY_MS = 8_000;
+const INITIAL_WAIT_MS = 40_000;
+const POLL_INTERVAL_MS = 20_000;
 const POLL_TIMEOUT_MS = 600_000;
 
 class ImageProcessingAPI {
