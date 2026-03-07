@@ -10,8 +10,9 @@ export interface RemoveObjectPayload {
 export const STRENGTHS = [0.8, 0.9, 1.0];
 export const GUIDANCES = [8, 9, 10, 11, 13];
 
-const INITIAL_WAIT_MS = 30_000;
-const POLL_INTERVAL_MS = 5_000;
+const SUBMIT_DELAY_MS = 500;
+const INITIAL_WAIT_MS = 20_000;
+const POLL_INTERVAL_MS = 8_000;
 const POLL_TIMEOUT_MS = 600_000;
 
 class ImageProcessingAPI {
@@ -33,28 +34,32 @@ class ImageProcessingAPI {
 			GUIDANCES.map( ( guidance ) => ( { strength, guidance } ) )
 		);
 
-		// Phase 1 — submit all jobs concurrently, no polling yet.
-		const submissions = await Promise.all(
-			combinations.map( ( { strength, guidance } ) =>
-				this.submitJob( payload, strength, guidance )
-					.then( ( jobId ) => ( { jobId, strength, guidance } ) )
-					.catch( ( err: Error ) => {
-						console.warn( `Submit failed S:${ strength } G:${ guidance } —`, err.message );
-						return null;
-					} )
-			)
-		);
+		// Phase 1: submit one at a time, avoids concurrent blob uploads and AI rate limits.
+		const submitted: { jobId: string; strength: number; guidance: number }[] = [];
 
-		const submitted = submissions.filter( ( s ): s is NonNullable<typeof s> => s !== null );
+		for (const { strength, guidance } of combinations) {
+			try {
+				const jobId = await this.submitJob( payload, strength, guidance );
+				submitted.push( { jobId, strength, guidance } );
+				console.log( `Submitted S:${ strength } G:${ guidance } → ${ jobId }` );
+			} catch (err: Error | any) {
+				console.warn( `Submit failed S:${ strength } G:${ guidance } —`, err.message );
+			}
+
+			// Small delay between submissions to avoid overwhelming the Worker.
+			await sleep( SUBMIT_DELAY_MS );
+		}
 
 		if (submitted.length === 0) {
 			throw new Error( "All job submissions failed. Please check your connection." );
 		}
 
-		// Phase 2 — wait for workers to process.
+		console.log( `${ submitted.length }/${ combinations.length } jobs submitted. Waiting ${ INITIAL_WAIT_MS / 1000 }s before polling…` );
+
+		// Phase 2: let all workers start their background AI inference
 		await sleep( INITIAL_WAIT_MS );
 
-		// Phase 3 — poll all jobs concurrently, resolving progressively via onProgress.
+		// Phase 3: poll all concurrently, resolve progressively
 		let successCount = 0;
 
 		await Promise.all(
