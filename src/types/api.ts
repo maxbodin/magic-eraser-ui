@@ -11,7 +11,7 @@ export interface JobDoneResponse {
 	success: true;
 	strength: number;
 	guidance: number;
-	image: string;
+	imageUrl: string;
 }
 
 export interface JobErrorResponse {
